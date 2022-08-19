@@ -1,6 +1,7 @@
 import numpy as np
+from numba import jit
 
-# @jit(nopython=True)
+@jit(nopython=True)
 def mean_squared_error(Y, Y_hat, derivative=False):
     m = Y_hat.shape[0]
     if derivative:
@@ -8,7 +9,7 @@ def mean_squared_error(Y, Y_hat, derivative=False):
     return (np.power(Y - Y_hat, 2)) / (2 * m)
 
 
-# @jit(nopython=True)
+@jit(nopython=True)
 def binary_crossentropy(Y, Y_hat, derivative=False):
     m = Y.shape[0]
     epsilon = 1e-5

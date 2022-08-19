@@ -44,42 +44,24 @@ class Model:
 
     def Train(self, X_train, Y_train, **kwargs):
         epochs = kwargs.get("epochs")
-        batch_size = kwargs.get("batch_size")
         verbose = kwargs.get("verbose")
 
-        # Split the data into batches
-        batch_X = np.swapaxes(np.array(np.split(X_train, batch_size)), 0, 1)
-        batch_Y = np.swapaxes(np.array(np.split(Y_train, batch_size)), 0, 1)
         if verbose:
             loss_values = []
         for epoch in range(epochs):
             loss = 0
-            # Shuffle the batches
-            shuffler = np.random.permutation(batch_X.shape[0])
-            batch_X = batch_X[shuffler]
-            batch_Y = batch_Y[shuffler]
-            for XmB, YmB in zip(batch_X, batch_Y):
-                for l in self.network_layers:
-                    l.init_gradients()
-                gradient = np.zeros((self.network_layers[-1].W.shape[0], 1))
-                for x, y in zip(XmB, YmB):
-                    # x = np.atleast_2d(x)
-                    # y = np.atleast_2d(y)
-                    self.feed_forward(x)
-                    output = self.network_layers[-1].activation_layer.output
-                    y = np.reshape(y, (y.shape[0], 1))
-                    gradient += self.loss_function(output, y, True)
+            for x, y in zip(X_train, Y_train):
+                self.feed_forward(x)
+                output = self.network_layers[-1].activation_layer.output
+                y = np.reshape(y, (y.shape[0], 1))
+                gradient = self.loss_function(output, y, True)
 
-                gradient /= batch_size
                 for layer in self.network_layers[-1:0:-1]:
-                    gradient = layer.backward(gradient)
+                    gradient = layer.backward(gradient, self.lr)
 
-                for l in self.network_layers[1:]:
-                    # l.dW /= batch_size
-                    # l.db /= batch_size
-                    l.update_params(self.lr)
+                loss += np.sum(self.loss_function(output, y)).item()
 
-            loss = np.sum(self.loss_function(output, y), axis=0)
+            loss /= X_train.shape[0]
 
             if verbose:
                 print(f"{epoch+1}/{epochs} - loss: {loss}")
